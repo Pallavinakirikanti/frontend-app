@@ -1,8 +1,13 @@
 import { useContext, useState, useEffect } from "react";
 import { AppContext } from "../App";
+import { useNavigate } from "react-router-dom";
+
 function Cart() {
+
   const { cart, setCart } = useContext(AppContext);
   const [orderValue, setOrderValue] = useState(0);
+  const navigate = useNavigate();
+
   const increment = (id) => {
     setCart(
       cart.map((item) => {
@@ -11,9 +16,10 @@ function Cart() {
         } else {
           return item;
         }
-      }),
+      })
     );
   };
+
   const decrement = (id) => {
     setCart(
       cart.map((item) => {
@@ -22,39 +28,74 @@ function Cart() {
         } else {
           return item;
         }
-      }),
+      })
     );
+  };
+
+  const placeOrder = async () => {
+
+    try {
+
+      const response = await fetch("http://localhost:5000/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          items: cart,
+          total: orderValue
+        })
+      });
+
+      if (response.ok) {
+        alert("Order placed successfully");
+        setCart([]);   // clear cart
+        navigate("/orders");
+      }
+
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {
     setOrderValue(
       cart.reduce((sum, item) => {
         return sum + item.quantity * item.price;
-      }, 0),
+      }, 0)
     );
   }, [cart]);
 
   return (
     <div>
+
       <h1>My Cart</h1>
+
       <ol>
         {cart.map((item) => (
           <li key={item._id}>
-            {item.name}-{item.price}-
+            {item.name} - {item.price} -
+
             <button onClick={() => decrement(item._id)}>-</button>
             {item.quantity}
-            <button onClick={() => increment(item._id)}>+</button>-
-            {item.quantity * item.price}
+            <button onClick={() => increment(item._id)}>+</button>
+
+            - {item.quantity * item.price}
           </li>
         ))}
       </ol>
+
       <p>
-        <strong>Order Value:{orderValue}</strong>
+        <strong>Order Value: {orderValue}</strong>
       </p>
+
       <p>
-        <button>Place Order</button>
+        <button onClick={placeOrder}>Place Order</button>
       </p>
+
     </div>
   );
 }
+
 export default Cart;
+
